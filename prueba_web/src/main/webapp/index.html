@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Estudiantes y Cursos</title>
+    <style>
+        table,
+        th,
+        td {
+            border: 1px solid black;
+            border-collapse: collapse;
+            padding: 5px;
+        }
+
+        table {
+            margin-bottom: 20px;
+        }
+
+        input,
+        button {
+            margin: 5px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>Estudiantes</h2>
+    <div>
+        <input type="text" id="buscarCedula" placeholder="Buscar por cédula">
+        <button onclick="buscarEstudiante()">Buscar</button>
+        <button onclick="obtenerEstudiantes()">Todos</button>
+    </div>
+    <table id="tablaEstudiantes"></table>
+
+    <h3>Agregar/Actualizar Estudiante</h3>
+    <input type="text" id="cedula" placeholder="Cédula">
+    <input type="text" id="nombre" placeholder="Nombre">
+    <button onclick="crearEstudiante()">Crear</button>
+    <button onclick="actualizarEstudiante()">Actualizar</button>
+
+    <button onclick="eliminarEstudiante()">Eliminar</button>
+
+    <hr>
+
+    <h2>Cursos</h2>
+    <div>
+        <input type="text" id="buscarCodigo" placeholder="Buscar por código">
+        <button onclick="buscarCurso()">Buscar</button>
+        <button onclick="obtenerCursos()">Todos</button>
+    </div>
+    <table id="tablaCursos"></table>
+
+    <h3>Agregar/Actualizar Curso</h3>
+    <input type="text" id="codigo" placeholder="Código">
+    <input type="text" id="nombreCurso" placeholder="Nombre">
+    <button onclick="crearCurso()">Crear</button>
+    <button onclick="actualizarCurso()">Actualizar</button>
+
+    <button onclick="eliminarCurso()">Eliminar</button>
+
+    <hr>
+
+    <h2>Asignar estudiante a curso</h2>
+    <input type="text" id="cedulaAsignar" placeholder="id estudiante">
+    <input type="text" id="codigoAsignar" placeholder="id curso">
+    <button onclick="asignar()">Asignar</button>
+
+    <hr>
+
+    <h2>Relaciones Estudiante-Curso</h2>
+    <button onclick="obtenerRelaciones()">Mostrar Relaciones</button>
+    <table id="tablaRelaciones"></table>
+
+    <script>
+        async function obtenerEstudiantes() {
+            const res = await fetch('http://localhost:8084/prueba_web/EstudianteServlet');
+            const datos = await res.json();
+            mostrarTabla(datos, 'tablaEstudiantes', ['id', 'cedula', 'nombre']);
+        }
+
+        async function buscarEstudiante() {
+            const cedula = document.getElementById('buscarCedula').value.trim();
+            if (!cedula) return alert("Ingresa una cédula");
+
+            const res = await fetch(`http://localhost:8084/prueba_web/EstudianteServlet?cedula=${encodeURIComponent(cedula)}`);
+            const dato = await res.json();
+
+            if (!dato || dato.success === false) {
+                alert("Estudiante no encontrado");
+                mostrarTabla([], 'tablaEstudiantes', ['id', 'cedula', 'nombre']);
+                return;
+            }
+
+            mostrarTabla([dato], 'tablaEstudiantes', ['id', 'cedula', 'nombre']);
+        }
+
+        async function crearEstudiante() {
+            const data = {
+                cedula: document.getElementById('cedula').value,
+                nombre: document.getElementById('nombre').value
+            };
+
+            const res = await fetch('http://localhost:8084/prueba_web/EstudianteServlet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            alert(result.success ? "Estudiante creado con éxito" : "Error al crear");
+            obtenerEstudiantes();
+        }
+
+        async function actualizarEstudiante() {
+            const data = {
+                cedula: document.getElementById('cedula').value,
+                nombre: document.getElementById('nombre').value
+            };
+
+            const res = await fetch('http://localhost:8084/prueba_web/EstudianteServlet', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            alert(result.success ? "Estudiante actualizado con éxito" : "Error al actualizar");
+            obtenerEstudiantes();
+        }
+
+        async function eliminarEstudiante() {
+            const cedula = document.getElementById('cedula').value;
+            if (!cedula) return alert("Debes ingresar la cédula");
+
+            const res = await fetch('http://localhost:8084/prueba_web/EstudianteServlet', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cedula })
+            });
+            const result = await res.json();
+            alert(result.success ? "Eliminado con éxito" : "Error al eliminar");
+            obtenerEstudiantes();
+        }
+
+        async function obtenerCursos() {
+            const res = await fetch('http://localhost:8084/prueba_web/CursoServlet');
+            const datos = await res.json();
+            mostrarTabla(datos, 'tablaCursos', ['id', 'codigo', 'nombre']);
+        }
+
+        async function buscarCurso() {
+            const codigo = document.getElementById('buscarCodigo').value.trim();
+            if (!codigo) return alert("Ingresa un código");
+
+            const res = await fetch(`http://localhost:8084/prueba_web/CursoServlet?codigo=${encodeURIComponent(codigo)}`);
+            const dato = await res.json();
+
+            if (!dato || dato.success === false) {
+                alert("Curso no encontrado");
+                mostrarTabla([], 'tablaCursos', ['codigo', 'nombre']);
+                return;
+            }
+
+            mostrarTabla([dato], 'tablaCursos', ['codigo', 'nombre']);
+        }
+
+        async function crearCurso() {
+            const data = {
+                codigo: document.getElementById('codigo').value,
+                nombre: document.getElementById('nombreCurso').value
+            };
+
+            const res = await fetch('http://localhost:8084/prueba_web/CursoServlet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            alert(result.success ? "Curso creado con éxito" : "Error al crear");
+            obtenerCursos();
+        }
+
+        async function actualizarCurso() {
+            const data = {
+                codigo: document.getElementById('codigo').value,
+                nombre: document.getElementById('nombreCurso').value
+            };
+
+            const res = await fetch('http://localhost:8084/prueba_web/CursoServlet', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            alert(result.success ? "Curso actualizado con éxito" : "Error al actualizar");
+            obtenerCursos();
+        }
+
+        async function eliminarCurso() {
+            const codigo = document.getElementById('codigo').value;
+            if (!codigo) return alert("Debes ingresar el código");
+
+            const res = await fetch('http://localhost:8084/prueba_web/CursoServlet', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ codigo })
+            });
+            const result = await res.json();
+            alert(result.success ? "Eliminado con éxito" : "Error al eliminar");
+            obtenerCursos();
+        }
+
+        async function asignar() {
+    const estudiante_id = Number(document.getElementById('cedulaAsignar').value);
+    const curso_id = Number(document.getElementById('codigoAsignar').value);
+
+    if (isNaN(estudiante_id) || isNaN(curso_id)) {
+        return alert("ID de estudiante o curso inválido");
+    }
+
+    const res = await fetch('http://localhost:8084/prueba_web/RelacionServlet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estudiante_id, curso_id })
+    });
+
+    const result = await res.json();
+    alert(result.success ? "Asignación exitosa" : "Error al asignar");
+}
+
+
+        async function obtenerRelaciones() {
+            const res = await fetch('http://localhost:8084/prueba_web/RelacionServlet');
+            const datos = await res.json();
+
+            if (!Array.isArray(datos)) {
+                alert("Error al obtener relaciones");
+                return;
+            }
+
+            mostrarTabla(datos, 'tablaRelaciones', ['estudiante', 'curso']);
+        }
+
+        function mostrarTabla(datos, idTabla, columnas) {
+            const tabla = document.getElementById(idTabla);
+            tabla.innerHTML = '';
+
+            if (!Array.isArray(datos) || datos.length === 0) {
+                tabla.innerHTML = '<tr><td colspan="' + columnas.length + '">No hay datos</td></tr>';
+                return;
+            }
+
+            let header = '<tr>' + columnas.map(c => `<th>${c}</th>`).join('') + '</tr>';
+            let rows = datos.map(d =>
+                '<tr>' + columnas.map(c => `<td>${d[c] ?? ''}</td>`).join('') + '</tr>'
+            ).join('');
+
+            tabla.innerHTML = header + rows;
+        }
+
+        // Inicialización
+        obtenerEstudiantes();
+        obtenerCursos();
+        obtenerRelaciones();
+    </script>
+
+</body>
+
+</html>

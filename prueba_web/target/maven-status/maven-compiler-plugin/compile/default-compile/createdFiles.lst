@@ -1,0 +1,10 @@
+controller\CursoServlet.class
+dao\CursoDAO.class
+model\Estudiante.class
+model\Relacion.class
+model\Curso.class
+controller\EstudianteServlet.class
+util\DBConnection.class
+dao\EstudianteDAO.class
+controller\RelacionServlet.class
+dao\RelacionDAO.class
